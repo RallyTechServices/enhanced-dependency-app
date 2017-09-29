@@ -1,4 +1,4 @@
-Ext.define('Rally.technicalservices.ModelBuilder',{
+Ext.define('CArABU.technicalservices.ModelBuilder',{
     singleton: true,
 
     build: function(modelType, newModelName) {
