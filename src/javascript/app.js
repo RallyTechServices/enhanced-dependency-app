@@ -22,6 +22,12 @@ Ext.define("enhanced-dependency-app", {
           layout: 'hbox'
         });
 
+        var filterBox = this.add({
+           xtype: 'container',
+           itemId: 'filter_box',
+           flex: 1
+        });
+
 
         this.add({
           xtype:'container',
@@ -58,6 +64,20 @@ Ext.define("enhanced-dependency-app", {
         });
         fp.on('fieldsupdated', this._update, this);
 
+        var ft = selectorBox.add({
+            xtype: 'rallyinlinefilterbutton',
+            modelNames: ['HierarchicalRequirement'],
+            context: this.getContext(),
+            margin: '10 5 10 5',
+            stateful: true,
+            stateId: 'grid-filters-3',
+            listeners: {
+                inlinefilterready: this._addInlineFilterPanel,
+                scope: this
+            }
+        });
+        ft.on('inlinefilterchange', this._update, this);
+
 
         selectorBox.add({
             xtype: 'rallybutton',
@@ -69,6 +89,9 @@ Ext.define("enhanced-dependency-app", {
             scope: this,
             handler: this._exportData
         });
+      },
+      _addInlineFilterPanel: function(panel){
+          this.down('#filter_box').add(panel);
       },
       _getSelectorType: function(){
           if (this._hasMilestoneScope() || this._hasReleaseScope()){
@@ -145,7 +168,9 @@ Ext.define("enhanced-dependency-app", {
       _getTimeboxFilter: function(){
          var tbRecord = this._getTimeBoxRecord();
          this.logger.log('_getTimeBoxRecord', tbRecord);
+
          var filters = null;
+
          if (tbRecord && tbRecord.get('_type') === 'milestone'){
             filters = [{
                property: 'Milestones',
@@ -155,10 +180,6 @@ Ext.define("enhanced-dependency-app", {
               value: tbRecord.get('_ref')
             }];
             filters = Rally.data.wsapi.Filter.or(filters);
-            filters = filters.and({
-              property: 'DirectChildrenCount',
-              value: 0
-            });
          }
 
          if (tbRecord && tbRecord.get('_type') === 'release'){
@@ -171,6 +192,20 @@ Ext.define("enhanced-dependency-app", {
             }];
             filters = Rally.data.wsapi.Filter.or(filters);
          }
+
+         //rallyinlinefilterbutton
+         if (filters){
+           filters = filters.and({
+             property: 'DirectChildrenCount',
+             value: 0
+           });
+
+           var filterButton = this.down('rallyinlinefilterbutton');
+           if (filterButton && filterButton.inlineFilterPanel && filterButton.getWsapiFilter()){
+              filters = filters.and(filterButton.getWsapiFilter());
+           }
+         }
+
          return filters;
 
       },
@@ -186,7 +221,7 @@ Ext.define("enhanced-dependency-app", {
           return;
         }
 
-        Rally.technicalservices.ModelBuilder.build('HierarchicalRequirement', 'StoryPredecessor', this._getAdditionalPredecessorFields()).then({
+        CArABU.technicalservices.ModelBuilder.build('HierarchicalRequirement', 'StoryPredecessor', this._getAdditionalPredecessorFields()).then({
            success: this._fetchData,
            failure: this._showErrorNotification,
            scope: this
@@ -240,7 +275,8 @@ Ext.define("enhanced-dependency-app", {
           model: model,
           fetch: this._getFetch(),
           filters: filters,
-          limit: 'Infinity'
+          limit: 'Infinity',
+          context: {project: null}
         }).load({
             callback: this._loadPredecessors,
             scope: this
@@ -266,6 +302,7 @@ Ext.define("enhanced-dependency-app", {
             field.renderer = function(v,m,r){
               return template.apply(r.get('__predecessor'));
             }
+            field.sortable = false;
             cols.push(field);
           });
 
@@ -281,18 +318,54 @@ Ext.define("enhanced-dependency-app", {
             field.renderer = function(v,m,r){
               return template.apply(r.getData());
             }
+            field.doSort = function(state){
+              var ds = this.up('rallygrid').getStore();
+              var field = this.getSortParam();
+              console.log('ds', ds.sorters);
+              ds.sort({
+                property: field,
+                direction: state,
+                sorterFn: function(v1, v2){
+                    v1 = v1.get(field);
+                    v2 = v2.get(field);
+                    if (Ext.isObject(v1)){
+                       v1 = v1._refObjectName || v1.Name || v1.FormattedID || v1;
+                    }
+                    if (Ext.isObject(v2)){
+                       v2 = v2._refObjectName || v2.Name || v2.FormattedID || v2;
+                    }
+                    // transform v1 and v2 here
+                    if (!v1){
+                       return -1;
+                    }
+                    if (!v2){
+                      return 1;
+                    }
+                    return v1 > v2 ? 1 : (v1 < v2 ? -1 : 0);
+                }
+                });
+            };
+
             cols.push(field);
           });
 
           this.logger.log('_getColumnCfgs', cols)
           return cols;
       },
+      _objectSort: function(state){
 
+      },
       _loadPredecessors: function(records, operation){
          this.logger.log('_loadPredecessors', records, operation);
          var predecessorFetch = this._getFetch(),
-            promises = [];
-         Ext.Array.each(records, function(r){ promises.push(r.loadPredecessors(predecessorFetch)); });
+            promises = [],
+            objectIDs = [];
+         Ext.Array.each(records, function(r){
+           if (!Ext.Array.contains(objectIDs, r.get('ObjectID'))){
+             promises.push(r.loadPredecessors(predecessorFetch));
+             objectIDs.push(r.get('ObjectID'));  //this is a hack to work around the issue where multiple records are being returned from store, but not api (not sure why)
+           }
+         });
 
          if (promises.length === 0){
             this._buildCustomGrid([]);
@@ -323,13 +396,20 @@ Ext.define("enhanced-dependency-app", {
             });
          });
 
-         var storeFields = fields.concat(Ext.Array.map(fields, function(f){ return '__p' + f; })).concat(['__predecessor']);
+         var storeFields = fields.concat(Ext.Array.map(fields, function(f){
+           return '__p' + f;
+         })).concat(['__predecessor']);
          storeFields.unshift('_ref');
          var store =  Ext.create('Rally.data.custom.Store',{
             fields: storeFields,
             data: data,
-            pageSize: Math.max(data.length, 200)
+            pageSize: Math.max(data.length, 200),
+            remoteSort: false
          });
+
+         if (this.down('#grid-dependencies')){
+            this.down('#grid-dependencies').destroy();
+         }
 
          this.down('#display_box').add({
              xtype: 'rallygrid',
