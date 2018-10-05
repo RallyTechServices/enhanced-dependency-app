@@ -1,5 +1,3 @@
-.DS_Store
-.grunt/
 grunt/
 /node_modules/
 auth.json*
@@ -9,5 +7,5 @@ _SpecRunner.html
 deploy/app.min.js
 .project
 .settings
-deploy/ConfluenceApp.txt
-deploy/ExternalApp.txt
+deploy/
+-deploy/Ugly.txt
