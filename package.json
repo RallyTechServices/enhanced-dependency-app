@@ -1,6 +1,6 @@
 {
   "name": "enhanced-dependency-app",
-  "version": "0.3.1",
+  "version": "0.2.1",
   "scripts": {
     "debug": "grunt debug",
     "debug:watch": "nodemon --exec grunt debug",
