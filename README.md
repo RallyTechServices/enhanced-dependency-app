@@ -14,7 +14,8 @@ This shows all stories with predecessors that are in the following dataset:
 
 For Milestone scoped dashboards, this app will only show leaf stories with predecessors.
 
-Caveat:  This app depends on the first level portfolio item name being "Feature"
+Additionally, the stories can be filtered to only those that descend from some ancestor portfolio item.
+For example, only stories under Epic XYZ.
 
 ## Development Notes
 

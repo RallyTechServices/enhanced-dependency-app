@@ -6,11 +6,20 @@ Ext.define("enhanced-dependency-app", {
     piLevel0Name: 'Feature',
 
     launch: function() {
-        this._addComponents();
+        // Begin loading pi types while waiting for ready event
+        var piTypesPromise = Rally.data.util.PortfolioItemHelper.getPortfolioItemTypes();
         this.on('ready', function() {
-            if (this._hasReleaseScope() || this._hasMilestoneScope()) {
-                this._update();
-            }
+            piTypesPromise.then({
+                scope: this,
+                success: function(piTypes) {
+                    this.portfolioItemTypes = piTypes;
+                    this.piLevel0Name = piTypes[0].get('Name');
+                    this._addComponents();
+                    if (this._hasReleaseScope() || this._hasMilestoneScope()) {
+                        this._update();
+                    }
+                }
+            })
         }, this);
     },
     _addComponents: function() {
@@ -74,6 +83,12 @@ Ext.define("enhanced-dependency-app", {
             listeners: {
                 inlinefilterready: this._addInlineFilterPanel,
                 scope: this
+            },
+            inlineFilterPanelConfig: {
+                quickFilterPanelConfig: {
+                    portfolioItemTypes: this.portfolioItemTypes,
+                    modelName: 'HierarchicalRequirement'
+                }
             }
         });
         ft.on('inlinefilterchange', this._update, this);
