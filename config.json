@@ -1,6 +1,9 @@
 {
-    "name": "Enhanced Dependency App",
     "sdk": "2.1",
     "className": "enhanced-dependency-app",
-    "story": "F374"
+    "javascript": [
+        "node_modules/@agile-central-technical-services/utils-ancestor-pi-inline-filter/index.js",
+        "src/javascript/utils/*.js",
+        "src/javascript/*.js"
+    ]
 }
