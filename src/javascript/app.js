@@ -3,42 +3,76 @@ Ext.define("enhanced-dependency-app", {
     componentCls: 'app',
     logger: new Rally.technicalservices.Logger(),
 
+    items: [{
+        id: Utils.AncestorPiAppFilter.RENDER_AREA_ID,
+        xtype: 'container',
+        layout: {
+            type: 'hbox',
+            align: 'middle',
+            defaultMargins: '0 10 10 0',
+        }
+    }, {
+        id: 'grid-area',
+        xtype: 'container',
+        flex: 1,
+        type: 'vbox',
+        align: 'stretch'
+    }],
+
     piLevel0Name: 'Feature',
 
     launch: function() {
         // Begin loading pi types while waiting for ready event
         var piTypesPromise = Rally.data.util.PortfolioItemHelper.getPortfolioItemTypes();
         this.on('ready', function() {
-            piTypesPromise.then({
-                scope: this,
-                success: function(piTypes) {
-                    this.portfolioItemTypes = piTypes;
-                    this.piLevel0Name = piTypes[0].get('Name');
-                    this._addComponents();
-                    if (this._hasReleaseScope() || this._hasMilestoneScope()) {
-                        this._update();
-                    }
+            this.ancestorFilterPlugin = Ext.create('Utils.AncestorPiAppFilter', {
+                ptype: 'UtilsAncestorPiAppFilter',
+                pluginId: 'ancestorFilterPlugin',
+                settingsConfig: {
+                    labelWidth: 150
+                },
+                listeners: {
+                    scope: this,
+                    ready: function(plugin) {
+                        piTypesPromise.then({
+                            scope: this,
+                            success: function(piTypes) {
+                                this.portfolioItemTypes = piTypes;
+                                this.piLevel0Name = piTypes[0].get('Name');
+                                this._addComponents();
+                                plugin.addListener({
+                                    scope: this,
+                                    select: function() {
+                                        this._update();
+                                    }
+                                });
+                                this._update();
+                            }
+                        })
+                    },
                 }
-            })
+            });
+            this.addPlugin(this.ancestorFilterPlugin);
         }, this);
     },
     _addComponents: function() {
-        this.removeAll();
+        var gridArea = this.down('#grid-area');
+        gridArea.removeAll();
 
-        var selectorBox = this.add({
+        var selectorBox = gridArea.add({
             //cls: 'rui-leftright',
             xtype: 'container',
             layout: 'hbox'
         });
 
-        var filterBox = this.add({
+        var filterBox = gridArea.add({
             xtype: 'container',
             itemId: 'filter_box',
             flex: 1
         });
 
 
-        this.add({
+        gridArea.add({
             xtype: 'container',
             itemId: 'display_box'
         });
@@ -226,22 +260,23 @@ Ext.define("enhanced-dependency-app", {
 
     },
     _update: function() {
+        if (this._hasReleaseScope() || this._hasMilestoneScope()) {
+            this.down('#display_box').removeAll();
 
-        this.down('#display_box').removeAll();
+            if (!this._getTimeboxFilter()) {
+                this.down('#display_box').add({
+                    xtype: 'container',
+                    html: '<div class="selector-msg"><span style="color:#888888;">Please select a valid Timebox.</span></div>'
+                });
+                return;
+            }
 
-        if (!this._getTimeboxFilter()) {
-            this.down('#display_box').add({
-                xtype: 'container',
-                html: '<div class="selector-msg"><span style="color:#888888;">Please select a valid Timebox.</span></div>'
+            CArABU.technicalservices.ModelBuilder.build('HierarchicalRequirement', 'StoryPredecessor', this._getAdditionalPredecessorFields()).then({
+                success: this._fetchData,
+                failure: this._showErrorNotification,
+                scope: this
             });
-            return;
         }
-
-        CArABU.technicalservices.ModelBuilder.build('HierarchicalRequirement', 'StoryPredecessor', this._getAdditionalPredecessorFields()).then({
-            success: this._fetchData,
-            failure: this._showErrorNotification,
-            scope: this
-        });
     },
     _getFetch: function(isPredecessorFetch) {
         var fields = this.down('fieldpickerbutton').getFields();
@@ -285,6 +320,11 @@ Ext.define("enhanced-dependency-app", {
             timeboxFilter = this._getTimeboxFilter();
 
         filters = filters.and(timeboxFilter);
+        var ancestorFilter = this.ancestorFilterPlugin.getFilterForType('HierarchicalRequirement');
+        if (ancestorFilter) {
+            filters = filters.and(ancestorFilter);
+        }
+
         this.logger.log('_fetchData filters', filters, filters.toString());
 
         Ext.create('Rally.data.wsapi.Store', {
@@ -462,6 +502,17 @@ Ext.define("enhanced-dependency-app", {
 
     isExternal: function() {
         return typeof(this.getAppId()) == 'undefined';
+    },
+
+    /**
+     * Must return a non-zero list of settings to allow the ancestorFilter plugin to
+     * insert its settings. The SDK decides if an app should have a settings menu option
+     * *before* initializing app plugins created in app.launch()
+     */
+    getSettingsFields: function() {
+        return [{
+            xtype: 'container'
+        }]
     }
 
 });
