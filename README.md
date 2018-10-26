@@ -16,7 +16,9 @@ For Milestone scoped dashboards, this app will only show leaf stories with prede
 
 Additionally, the stories can be filtered to only those that descend from some ancestor portfolio item.
 For example, only stories under Epic XYZ. If placed on a page that also has a [pi-ancestor-filter-broadcaster](https://github.com/RallyTechServices/pi-ancestor-filter-broadcaster),
-and filter by ancestor portfolio item is enabled, it will listen to the broadcaster for the selected ancestor.
+and filter by ancestor portfolio item is enabled, it will listen to the broadcaster for the selected ancestor and project scope.
+
+Optionally, the app can ignore project scope.
 
 ## Development Notes
 

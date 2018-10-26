@@ -327,12 +327,16 @@ Ext.define("enhanced-dependency-app", {
 
         this.logger.log('_fetchData filters', filters, filters.toString());
 
+        var dataContext = this.getContext().getDataContext();
+        if (this.searchAllProjects()) {
+            dataContext.project = null;
+        }
         Ext.create('Rally.data.wsapi.Store', {
             model: model,
             fetch: this._getFetch(),
             filters: filters,
             limit: 'Infinity',
-            context: { project: null }
+            context: dataContext
         }).load({
             callback: this._loadPredecessors,
             scope: this
@@ -502,6 +506,10 @@ Ext.define("enhanced-dependency-app", {
 
     isExternal: function() {
         return typeof(this.getAppId()) == 'undefined';
+    },
+
+    searchAllProjects: function() {
+        return this.ancestorFilterPlugin.getIgnoreProjectScope();
     },
 
     /**
