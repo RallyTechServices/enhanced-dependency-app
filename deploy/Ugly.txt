@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>enhanced-dependency-app-1.0.4</title>
+    <title>enhanced-dependency-app-1.0.5</title>
     <!--  (c) 2017 CA Technologies.  All Rights Reserved. -->
-    <!--  Build Date: Wed Nov 07 2018 22:46:38 GMT+0000 (UTC) -->
+    <!--  Build Date: Wed Nov 14 2018 22:04:21 GMT+0000 (UTC) -->
 
     <script type="text/javascript">
-        var APP_BUILD_DATE = "Wed Nov 07 2018 22:46:38 GMT+0000 (UTC)";
-        var CHECKSUM = 10826515617;
+        var APP_BUILD_DATE = "Wed Nov 14 2018 22:04:21 GMT+0000 (UTC)";
+        var CHECKSUM = 10826509610;
     </script>
 
     <script type="text/javascript" src="/apps/2.1/sdk.js"></script>
