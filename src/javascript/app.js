@@ -260,23 +260,30 @@ Ext.define("enhanced-dependency-app", {
 
     },
     _update: function() {
-        if (this._hasReleaseScope() || this._hasMilestoneScope()) {
-            this.down('#display_box').removeAll();
-
-            if (!this._getTimeboxFilter()) {
-                this.down('#display_box').add({
-                    xtype: 'container',
-                    html: '<div class="selector-msg"><span style="color:#888888;">Please select a valid Timebox.</span></div>'
-                });
-                return;
-            }
-
-            CArABU.technicalservices.ModelBuilder.build('HierarchicalRequirement', 'StoryPredecessor', this._getAdditionalPredecessorFields()).then({
-                success: this._fetchData,
-                failure: this._showErrorNotification,
-                scope: this
-            });
+        this.setLoading(true);
+        // If there is a current chart store, force it to stop loading pages
+        // Note that recreating the grid will then create a new chart store with
+        // the same store ID.
+        var storyStore = Ext.getStore('storyStore');
+        if (storyStore) {
+            storyStore.cancelLoad();
         }
+        var displayBox = this.down('#display_box');
+        displayBox.removeAll();
+
+        if (!this._getTimeboxFilter()) {
+            displayBox.add({
+                xtype: 'container',
+                html: '<div class="selector-msg"><span style="color:#888888;">Please select a valid Timebox.</span></div>'
+            });
+            return;
+        }
+
+        CArABU.technicalservices.ModelBuilder.build('HierarchicalRequirement', 'StoryPredecessor', this._getAdditionalPredecessorFields()).then({
+            success: this._fetchData,
+            failure: this._showErrorNotification,
+            scope: this
+        });
     },
     _getFetch: function(isPredecessorFetch) {
         var fields = this.down('fieldpickerbutton').getFields();
@@ -332,6 +339,7 @@ Ext.define("enhanced-dependency-app", {
             dataContext.project = null;
         }
         Ext.create('Rally.data.wsapi.Store', {
+            storeId: 'storyStore',
             model: model,
             fetch: this._getFetch(),
             filters: filters,
@@ -484,11 +492,17 @@ Ext.define("enhanced-dependency-app", {
             },
             autoScroll: true
         });
-
+        this.setLoading(false);
     },
     _showErrorNotification: function(error) {
+        this.setLoading(false);
         this.logger.log('_showErrorNotification', error);
         Rally.ui.notify.Notifier.showError({ message: error });
+    },
+
+    setLoading: function(loading) {
+        var displayBox = this.down('#display_box');
+        displayBox.setLoading(loading);
     },
 
     getOptions: function() {

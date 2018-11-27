@@ -2,6 +2,7 @@
     "sdk": "2.1",
     "className": "enhanced-dependency-app",
     "javascript": [
+        "node_modules/@agile-central-technical-services/utils-cancel-store-load/index.js",
         "node_modules/@agile-central-technical-services/utils-ancestor-pi-app-filter/index.js",
         "node_modules/@agile-central-technical-services/utils-ancestor-pi-inline-filter/index.js",
         "src/javascript/utils/*.js",

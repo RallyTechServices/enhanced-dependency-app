@@ -10,6 +10,10 @@
   version "1.0.12"
   resolved "https://registry.yarnpkg.com/@agile-central-technical-services/utils-ancestor-pi-inline-filter/-/utils-ancestor-pi-inline-filter-1.0.12.tgz#eb82287496305bec975beea03ff7a510588e05ee"
 
+"@agile-central-technical-services/utils-cancel-store-load@^1.0.0":
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/@agile-central-technical-services/utils-cancel-store-load/-/utils-cancel-store-load-1.0.0.tgz#db58fb143466cb3a111b785a9512b211a5211b6b"
+
 "@sinonjs/commons@^1.0.2":
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/@sinonjs/commons/-/commons-1.0.2.tgz#3e0ac737781627b8844257fadc3d803997d0526e"
