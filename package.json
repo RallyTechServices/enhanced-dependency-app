@@ -1,6 +1,6 @@
 {
   "name": "enhanced-dependency-app",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "scripts": {
     "debug": "grunt debug",
     "debug:watch": "nodemon --exec grunt debug",
@@ -9,8 +9,8 @@
     "deploy-debugsdk:watch": "nodemon --exec grunt deploy-debugsdk"
   },
   "dependencies": {
-    "@agile-central-technical-services/utils-ancestor-pi-app-filter": "^2.3.0",
-    "@agile-central-technical-services/utils-ancestor-pi-inline-filter": "^1.0.13",
+    "@agile-central-technical-services/utils-ancestor-pi-app-filter": "^2.3.1",
+    "@agile-central-technical-services/utils-ancestor-pi-inline-filter": "^1.0.14",
     "@agile-central-technical-services/utils-cancel-store-load": "^1.0.0"
   },
   "devDependencies": {
